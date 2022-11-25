@@ -1,82 +1,123 @@
 package datakeeper_client_go
 
 import (
-	"strings"
-	"sync"
+	"net/http"
 
 	api "github.com/Mozzart88/api_go"
 )
 
-type DKC api.Server
-
-var singleton *DKC
-var once sync.Once
-
-func NewClient(url string, secrete string, ua string) *DKC {
-	once.Do(func() {
-		singleton = new(DKC)
-		singleton.Secret = secrete
-		singleton.Url = url
-		singleton.UserAgent = ua
-	})
-	return singleton
+type DKC struct {
+	api.Client
 }
 
-func Get() *DKC {
+var singleton *DKC
+
+// var once sync.Once
+
+func NewDKC(url string, ua string) *DKC {
 	if singleton == nil {
-		singleton = NewClient("", "", "")
+		singleton = new(DKC)
+		singleton.Url(url)
+		singleton.UA(ua)
 	}
 	return singleton
 }
 
-func (dkc *DKC) newServer(path string) *api.Server {
-	var s *api.Server
-
-	s = new(api.Server)
-	s.Secret = dkc.Secret
-	s.Url = strings.Join([]string{dkc.Url, path}, "/")
-	s.UserAgent = dkc.UserAgent
-	return s
+func Get() *DKC {
+	return singleton
 }
 
-func (dkc *DKC) sendRequest(method string, path string, data api.JsonMap) (api.ApiResponse, error) {
-	var err error
-	var res api.ApiResponse
-	var s *api.Server
+func (dkc *DKC) sendRequest(method string, path string, data api.JsonMap) (*http.Response, error) {
+	var c *DKC
 
-	s = dkc.newServer(path)
-	res, err = s.CallApi(method, data)
-	return res, err
+	c = Get()
+	return c.CallApi(method, path, data)
 }
 
-func (dkc *DKC) Get(from string, whereClaus api.JsonMap) (api.ApiResponse, error) {
+func (dkc *DKC) Get(from string, whereClaus api.JsonMap) (api.Response, error) {
+	const method string = "POST"
 	var err error
-	var res api.ApiResponse
+	var response *http.Response
+	var res api.Response
 
-	res, err = dkc.sendRequest("POST", from, whereClaus)
-	return res, err
+	response, err = dkc.sendRequest(method, from, whereClaus)
+	if err != nil {
+		return res, err
+	}
+	res = api.NewResponse(response)
+	if response.StatusCode == http.StatusOK {
+		return res, nil
+	}
+	if response.StatusCode == http.StatusAccepted {
+		return res, nil
+	}
+	st := response.StatusCode
+	msg := res.Body.Get("msg").(string)
+	return res, api.NewError(st, msg)
 }
 
-func (dkc *DKC) Update(table string, data api.JsonMap) (api.ApiResponse, error) {
+func (dkc *DKC) Update(table string, data api.JsonMap) (api.Response, error) {
+	const method string = "UPDATE"
 	var err error
-	var res api.ApiResponse
+	var response *http.Response
+	var res api.Response
 
-	res, err = dkc.sendRequest("UPDATE", table, data)
-	return res, err
+	response, err = dkc.sendRequest(method, table, data)
+	if err != nil {
+		return res, err
+	}
+	res = api.NewResponse(response)
+	if response.StatusCode == http.StatusOK {
+		return res, nil
+	}
+	if response.StatusCode == http.StatusAccepted {
+		return res, nil
+	}
+	st := response.StatusCode
+	msg := res.Body.Get("msg").(string)
+	return res, api.NewError(st, msg)
 }
 
-func (dkc *DKC) Delete(from string, whereClaus api.JsonMap) (api.ApiResponse, error) {
+func (dkc *DKC) Delete(from string, whereClaus api.JsonMap) (api.Response, error) {
+	const method string = "DELETE"
 	var err error
-	var res api.ApiResponse
+	var response *http.Response
+	var res api.Response
 
-	res, err = dkc.sendRequest("DELETE", from, whereClaus)
-	return res, err
+	response, err = dkc.sendRequest(method, from, whereClaus)
+	if err != nil {
+		return res, err
+	}
+	res = api.NewResponse(response)
+	if response.StatusCode == http.StatusOK {
+		return res, nil
+	}
+	if response.StatusCode == http.StatusAccepted {
+		return res, nil
+	}
+	st := response.StatusCode
+	msg := res.Body.Get("msg").(string)
+	return res, api.NewError(st, msg)
 }
 
-func (dkc *DKC) Add(to string, data api.JsonMap) (api.ApiResponse, error) {
+func (dkc *DKC) Add(to string, data api.JsonMap) (api.Response, error) {
+	const method string = "PUT"
 	var err error
-	var res api.ApiResponse
+	var response *http.Response
+	var res api.Response
 
-	res, err = dkc.sendRequest("PUT", to, data)
-	return res, err
+	response, err = dkc.sendRequest(method, to, data)
+	if err != nil {
+		return res, err
+	}
+	res = api.NewResponse(response)
+	if response.StatusCode == http.StatusOK {
+		return res, nil
+	}
+	if response.StatusCode == http.StatusAccepted {
+		return res, nil
+	}
+	st := response.StatusCode
+	msg := res.Body.Get("msg").(string)
+	return res, api.NewError(st, msg)
 }
