@@ -28,10 +28,10 @@ func Get() *DKC {
 }
 
 func (dkc *DKC) sendRequest(method string, path string, data api.JsonMap) (*http.Response, error) {
-	var c *DKC
+	// var c *DKC
 
-	c = Get()
-	return c.CallApi(method, path, data)
+	// c = Get()
+	return dkc.CallApi(method, path, data)
 }
 
 func (dkc *DKC) Get(from string, whereClaus api.JsonMap) (api.Response, error) {
